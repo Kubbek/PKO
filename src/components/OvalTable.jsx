@@ -50,7 +50,7 @@ export default function OvalTable({ players, tableNum, onSeatClick, onSeatRightC
                 onDrop={() => !readOnly && onDrop?.(tableNum, s)}
               >
                 <div style={{ position: 'absolute', top: 2, right: 4, fontSize: 9, fontWeight: 700, color: 'var(--text3,#a8a29e)', lineHeight: 1 }}>{s}</div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: isWinner ? 'var(--green,#059669)' : isLoser ? 'var(--red,#dc2626)' : 'var(--text,#1c1917)', lineHeight: 1.25, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingTop: 2 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: isWinner ? 'var(--green,#059669)' : isLoser ? 'var(--red,#dc2626)' : 'var(--text,#1c1917)', lineHeight: 1.25, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingTop: 2 }}>
                   {p.name}{p.rebuys > 1 && <span style={{ fontSize: 8, color: 'var(--accent,#b45309)', marginLeft: 2, fontWeight: 700 }}>R{p.rebuys}</span>}
                 </div>
                 <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 13, color: isWinner ? 'var(--green,#059669)' : isLoser ? 'var(--red,#dc2626)' : 'var(--accent,#b45309)', letterSpacing: 0.5, marginTop: 2, lineHeight: 1 }}>

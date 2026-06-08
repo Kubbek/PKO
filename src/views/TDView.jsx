@@ -373,7 +373,7 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
           <span className="app-logo">PKO</span>
           <span className="app-logo-sub">TRACKER · TD</span>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className='app-header-right' style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <ThemeSwitcher />
           <div style={{ width: 1, height: 20, background: 'var(--border2)' }} />
           <div className="live-badge"><div className="live-dot" />{activePlayers.length} aktywnych</div>
@@ -385,7 +385,7 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
       </div>
 
       {/* STATS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: '1.5rem' }}>
+      <div className='stats-grid-4' style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: '1.5rem' }}>
         <div className="stat-card"><div className="sl">Aktywni gracze</div><div className="sv accent num">{activePlayers.length}</div></div>
         <div className="stat-card green"><div className="sl">Pula bounty</div><div className="sv num" style={{ fontSize: 22 }}>{r2(activePlayers.reduce((s, p) => s + p.bounty, 0))} <span style={{ fontSize: 14, color: 'var(--text2)' }}>zł</span></div></div>
         <div className="stat-card"><div className="sl">Wypłacono</div><div className="sv num" style={{ fontSize: 22 }}>{r2(players.reduce((s, p) => s + p.pocket_bounty, 0))} <span style={{ fontSize: 14, color: 'var(--text2)' }}>zł</span></div></div>
@@ -402,54 +402,53 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
       {/* ── TABLES TAB ── */}
       {tab === 'tables' && (
         <div>
-          {/* Table selector */}
-          <div style={{ display: 'flex', gap: 6, marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            {validTables.map(t => (
-              <button key={t} className={`table-btn${currentTable===t?' active':''}`} onClick={() => setViewTable(t)}>
-                Stół {t} <span style={{ fontSize: 11, opacity: 0.7 }}>· {activePlayers.filter(p => p.table_num===t).length}/9</span>
-              </button>
-            ))}
-            {/* Size buttons */}
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+          {/* Controls row */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--text3)' }}>Rozmiar:</div>
               {['s','m','l'].map(sz => (
                 <button key={sz} onClick={() => setTableSize(sz)}
                   style={{ padding: '5px 10px', fontSize: 11, fontWeight: 700, border: `1px solid ${tableSize===sz?'var(--accent)':'var(--border)'}`, background: tableSize===sz?'var(--accent-bg)':'transparent', color: tableSize===sz?'var(--accent)':'var(--text2)', borderRadius: 6, cursor: 'pointer', textTransform: 'uppercase' }}>
                   {sz}
                 </button>
               ))}
+              <div style={{ width: 1, height: 16, background: 'var(--border2)', margin: '0 4px' }} />
+              {[['oval','⬭'],['grid','⊞']].map(([v,icon]) => (
+                <button key={v} onClick={() => setTableView(v)}
+                  style={{ padding: '5px 9px', fontSize: 13, border: `1px solid ${tableView===v?'var(--accent)':'var(--border)'}`, background: tableView===v?'var(--accent-bg)':'transparent', color: tableView===v?'var(--accent)':'var(--text2)', borderRadius: 6, cursor: 'pointer' }}>
+                  {icon}
+                </button>
+              ))}
+            </div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: !selectedWinner?'var(--text2)':!selectedLoser?'var(--green)':'var(--accent)' }}>
+              {!selectedWinner?'Klik eliminującego':!selectedLoser?'→ Klik wyeliminowanego':'Przetwarzanie...'}
             </div>
           </div>
 
-          {/* Section title + view toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div className="section-title" style={{ margin: 0, border: 'none', padding: 0 }}>Stół {currentTable}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: !selectedWinner?'var(--text2)':!selectedLoser?'var(--green)':'var(--accent)' }}>
-                {!selectedWinner?'Klik eliminującego':!selectedLoser?'→ Klik wyeliminowanego':'Przetwarzanie...'}
-              </div>
-              <div style={{ display: 'flex', gap: 3 }}>
-                {[['oval','⬭'],['grid','⊞']].map(([v,icon]) => (
-                  <button key={v} onClick={() => setTableView(v)}
-                    style={{ padding: '3px 9px', fontSize: 13, border: `1px solid ${tableView===v?'var(--accent)':'var(--border)'}`, background: tableView===v?'var(--accent-bg)':'transparent', color: tableView===v?'var(--accent)':'var(--text2)', borderRadius: 6, cursor: 'pointer' }}>
-                    {icon}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Table display */}
-          <div style={{ maxWidth: sizeMin[tableSize] * 3 + 40 }}>
-            {tableView === 'oval'
-              ? <OvalTable players={activePlayers} tableNum={currentTable} onSeatClick={handleSeatClick}
-                  onSeatRightClick={handleSeatRightClick} onDragStart={handleDragStart} onDrop={handleDrop}
-                  onEmptySeatClick={openAddPlayerAtSeat}
-                  selectedWinner={selectedWinner} selectedLoser={selectedLoser} />
-              : <SeatGrid players={activePlayers} tableNum={currentTable} onSeatClick={handleSeatClick}
-                  onSeatRightClick={handleSeatRightClick} onDragStart={handleDragStart} onDrop={handleDrop}
-                  onEmptySeatClick={openAddPlayerAtSeat}
-                  selectedWinner={selectedWinner} selectedLoser={selectedLoser} />
-            }
+          {/* All tables in wrapping grid */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'flex-start' }}>
+            {validTables.map(t => {
+              const tSize = { s: 200, m: 300, l: 420 }[tableSize]
+              return (
+                <div key={t} style={{ flex: `1 1 ${tSize}px`, maxWidth: tSize + 40, minWidth: Math.min(tSize, 200) }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--text3)' }}>
+                      Stół {t} <span style={{ fontWeight: 400 }}>· {activePlayers.filter(p=>p.table_num===t).length}/9</span>
+                    </div>
+                  </div>
+                  {tableView === 'oval'
+                    ? <OvalTable players={activePlayers} tableNum={t} onSeatClick={handleSeatClick}
+                        onSeatRightClick={handleSeatRightClick} onDragStart={handleDragStart} onDrop={handleDrop}
+                        onEmptySeatClick={openAddPlayerAtSeat}
+                        selectedWinner={selectedWinner} selectedLoser={selectedLoser} />
+                    : <SeatGrid players={activePlayers} tableNum={t} onSeatClick={handleSeatClick}
+                        onSeatRightClick={handleSeatRightClick} onDragStart={handleDragStart} onDrop={handleDrop}
+                        onEmptySeatClick={openAddPlayerAtSeat}
+                        selectedWinner={selectedWinner} selectedLoser={selectedLoser} />
+                  }
+                </div>
+              )
+            })}
           </div>
 
           {selectedWinner && !selectedLoser && (
@@ -467,7 +466,7 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
           <div className="section-title">Ranking bounty <span style={{ color: 'var(--text3)', fontSize: 10, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>– prawy klik = szczegóły / edycja</span></div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[...activePlayers].sort((a, b) => b.bounty - a.bounty).map((p, i) => (
-              <div key={p.id} className={`player-row fade-up${i===0?' top':''}`} style={{ animationDelay: `${i*0.03}s`, cursor: 'context-menu' }}
+              <div key={p.id} className={`player-row fade-up${i===0?' top':''}`} style={{ animationDelay: `${i*0.03}s`, cursor: 'context-menu', gridTemplateColumns: 'clamp(28px,36px,36px) 1fr auto auto' }}
                 onContextMenu={e => { e.preventDefault(); setPopupPlayer(p) }}>
                 <div className="num" style={{ fontSize: 20, color: i===0?'var(--accent)':'var(--text3)', textAlign: 'center', fontWeight: 700 }}>{i===0?'♛':i+1}</div>
                 <div>

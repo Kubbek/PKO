@@ -278,7 +278,7 @@ button,input,select{font-family:'DM Sans',sans-serif}
   color:var(--border2);line-height:1;pointer-events:none;
 }
 .seat-player{padding:10px 10px 8px;text-align:center}
-.sp-name{font-size:15px;font-weight:700;color:var(--text);line-height:1.2}
+.sp-name{font-size:17px;font-weight:700;color:var(--text);line-height:1.2}
 .sp-bounty{
   font-family:var(--num-font);font-size:17px;
   color:var(--accent);margin-top:4px;letter-spacing:1px;
@@ -358,3 +358,42 @@ button,input,select{font-family:'DM Sans',sans-serif}
 
 /* ─── NUM HELPER ─────────────────────────────── */
 .num{font-family:var(--num-font);letter-spacing:1px}
+
+/* ─── RESPONSIVE ─────────────────────────────── */
+@media (max-width: 640px) {
+  /* Stats – 2 columns on mobile */
+  .stats-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .stats-grid-3 { grid-template-columns: repeat(3, 1fr) !important; }
+
+  /* App header stacks */
+  .app-header { flex-wrap: wrap; gap: 8px; }
+  .app-header-right { flex-wrap: wrap; gap: 6px; }
+
+  /* Tabs – smaller text */
+  .tab-btn { font-size: 11px; padding: 7px 6px; }
+
+  /* Modal full width */
+  .modal { border-radius: 0; max-width: 100% !important; margin: 0; }
+  .overlay { align-items: flex-end; padding: 0; }
+
+  /* Player rows – tighter */
+  .player-row { padding: 9px 10px; gap: 8px; }
+
+  /* Log entries */
+  .log-entry { font-size: 12px; }
+
+  /* Stat card numbers smaller */
+  .stat-card .sv { font-size: 22px !important; }
+
+  /* Table buttons wrap */
+  .table-btns-row { flex-wrap: wrap; }
+
+  /* Section title smaller */
+  .section-title { font-size: 9px; letter-spacing: 1.5px; }
+}
+
+@media (max-width: 400px) {
+  .tab-btn { font-size: 10px; padding: 7px 4px; letter-spacing: 0; }
+  .app-logo { font-size: 18px; }
+  .stat-card .sv { font-size: 20px !important; }
+}
