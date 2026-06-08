@@ -3,20 +3,24 @@ import { r2 } from '../lib/bounty'
 import ThemeSwitcher from '../components/ThemeSwitcher'
 import OvalTable from '../components/OvalTable'
 
-function useOrientation() {
-  const [landscape, setLandscape] = useState(window.innerWidth > window.innerHeight)
+function useLayout() {
+  const get = () => ({
+    mobile: window.innerWidth < 768,
+    landscape: window.innerWidth > window.innerHeight,
+  })
+  const [layout, setLayout] = useState(get)
   useEffect(() => {
-    const fn = () => setLandscape(window.innerWidth > window.innerHeight)
+    const fn = () => setLayout(get())
     window.addEventListener('resize', fn)
     return () => window.removeEventListener('resize', fn)
   }, [])
-  return landscape
+  return layout
 }
 
 export default function SpectatorView({ tournament, onLogout }) {
   const [tab, setTab] = useState('ranking')
   const [viewTable, setViewTable] = useState(null)
-  const landscape = useOrientation()
+  const { mobile, landscape } = useLayout()
 
   const players = tournament?.players || []
   const eliminations = tournament?.eliminations || []
@@ -128,7 +132,7 @@ export default function SpectatorView({ tournament, onLogout }) {
 
   const BottomNav = () => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 4, padding: '6px 10px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg3)', flexShrink: 0 }}>
-      {[['ranking', '🏆', 'Ranking'], ['tables', '🃏', 'Stoły'], ['feed', '⚡', 'Eliminacje']].map(([id, icon, label]) => (
+      {[['ranking', 'Ranking'], ['tables', 'Stoły'], ['feed', 'Eliminacje']].map(([id, icon, label]) => (
         <button key={id} onClick={() => setTab(id)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '8px 4px', border: 'none', cursor: 'pointer', background: tab === id ? 'var(--accent-bg)' : 'transparent', borderRadius: 10, color: tab === id ? 'var(--accent)' : 'var(--text2)', transition: 'all 0.15s' }}>
           <span style={{ fontSize: 20 }}>{icon}</span>
           <span style={{ fontSize: 11, fontWeight: 600 }}>{label}</span>
@@ -137,8 +141,8 @@ export default function SpectatorView({ tournament, onLogout }) {
     </div>
   )
 
-  // ── PORTRAIT ─────────────────────────────────────────
-  if (!landscape) return (
+  // ── PORTRAIT (mobile only) ───────────────────────────
+  if (mobile && !landscape) return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: 'var(--bg)', maxWidth: 520, margin: '0 auto' }}>
       <Header />
       <StatsStrip />
@@ -161,7 +165,7 @@ export default function SpectatorView({ tournament, onLogout }) {
         <div style={{ overflowY: 'auto', padding: '10px 12px' }}>
           {/* Tab buttons horizontal */}
           <div className="tab-bar" style={{ marginBottom: 10 }}>
-            {[['ranking', '🏆 Ranking'], ['tables', '🃏 Stoły'], ['feed', '⚡ Eliminacje']].map(([id, label]) => (
+            {[['ranking', 'RANKING'], ['tables', 'STOŁY'], ['feed', 'ELIMINACJE']].map(([id, label]) => (
               <button key={id} className={`tab-btn${tab === id ? ' active' : ''}`} onClick={() => setTab(id)} style={{ fontSize: 12 }}>{label}</button>
             ))}
           </div>
