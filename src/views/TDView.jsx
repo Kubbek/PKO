@@ -317,6 +317,12 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
     show(`Cofnięto: ${loser.name} wraca`); onRefresh()
   }
 
+  // Open add player modal pre-filled with table+seat
+  function openAddPlayerAtSeat(tableNum, seat) {
+    setAddForm(f => ({ ...f, tableNum: String(tableNum), seat: String(seat), name: '', bounty: '' }))
+    setTab('add')
+  }
+
   // Drag-and-drop seat reassignment
   const dragRef = useRef(null)
 
@@ -437,9 +443,11 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
             {tableView === 'oval'
               ? <OvalTable players={activePlayers} tableNum={currentTable} onSeatClick={handleSeatClick}
                   onSeatRightClick={handleSeatRightClick} onDragStart={handleDragStart} onDrop={handleDrop}
+                  onEmptySeatClick={openAddPlayerAtSeat}
                   selectedWinner={selectedWinner} selectedLoser={selectedLoser} />
               : <SeatGrid players={activePlayers} tableNum={currentTable} onSeatClick={handleSeatClick}
                   onSeatRightClick={handleSeatRightClick} onDragStart={handleDragStart} onDrop={handleDrop}
+                  onEmptySeatClick={openAddPlayerAtSeat}
                   selectedWinner={selectedWinner} selectedLoser={selectedLoser} />
             }
           </div>

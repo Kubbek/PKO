@@ -12,7 +12,9 @@ export default function DealerView({ tournament, onRefresh, onLogout, tableNum }
   const [selectedLoser, setSelectedLoser] = useState(null)
   const winnerRef = useRef(null)
   const elimLock = useRef(false)
+  const dragRef = useRef(null)
   const [tableView, setTableView] = useState('oval')
+  const [quickAdd, setQuickAdd] = useState(null) // {tableNum, seat}
 
   const players = tournament?.players || []
   const eliminations = tournament?.eliminations || []
@@ -78,6 +80,34 @@ export default function DealerView({ tournament, onRefresh, onLogout, tableNum }
         {selectedWinner && selectedLoser && <><span style={{ color: 'var(--green)', fontWeight: 700 }}>{winnerPlayer?.name}</span><span style={{ color: 'var(--text3)', margin: '0 6px' }}>→</span><span style={{ color: 'var(--red)', fontWeight: 700 }}>{loserPlayer?.name}</span></>}
       </div>
 
+      {quickAdd && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: '1rem' }} onClick={() => setQuickAdd(null)}>
+          <div className="modal" style={{ maxWidth: 320 }} onClick={e => e.stopPropagation()}>
+            <h2 style={{ marginBottom: '1rem', fontSize: 18 }}>Dodaj gracza – Miejsce {quickAdd.seat}</h2>
+            <form onSubmit={async e => {
+              e.preventDefault()
+              const fd = new FormData(e.target)
+              const name = fd.get('name').trim()
+              if (!name) return
+              const { supabase } = await import('../lib/supabase')
+              const { r2 } = await import('../lib/bounty')
+              const bounty = parseFloat(fd.get('bounty')) || tournament.init_bounty
+              const same = players.filter(p => p.name === name)
+              const rebuys = same.length > 0 ? Math.max(...same.map(p => p.rebuys||1))+1 : 1
+              await supabase.from('players').insert({ tournament_id: tournament.id, name, table_num: quickAdd.tableNum, seat: quickAdd.seat, bounty, pocket_bounty: 0, active: true, rebuys })
+              setQuickAdd(null); onRefresh()
+            }}>
+              <div className="field"><label>Imię / nick</label><input name="name" autoFocus placeholder="Imię gracza" /></div>
+              <div className="field"><label>Bounty (zł)</label><input name="bounty" type="number" placeholder={tournament.init_bounty} /></div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" className="btn btn-ghost" onClick={() => setQuickAdd(null)}>Anuluj</button>
+                <button type="submit" className="btn btn-accent" style={{ flex: 1 }}>Dodaj</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 3, marginBottom: 8 }}>
         {[['oval','⬭'],['grid','⊞']].map(([v,icon]) => (
           <button key={v} onClick={() => setTableView(v)}
@@ -87,8 +117,8 @@ export default function DealerView({ tournament, onRefresh, onLogout, tableNum }
         ))}
       </div>
       {tableView === 'oval'
-        ? <OvalTable players={players} tableNum={tableNum} onSeatClick={handleSeatClick} selectedWinner={selectedWinner} selectedLoser={selectedLoser} />
-        : <SeatGrid players={players} tableNum={tableNum} onSeatClick={handleSeatClick} selectedWinner={selectedWinner} selectedLoser={selectedLoser} />
+        ? <OvalTable players={players} tableNum={tableNum} onSeatClick={handleSeatClick} onEmptySeatClick={(t,s) => setQuickAdd({tableNum:t,seat:s})} onDragStart={p => { dragRef.current = p }} onDrop={async (t,s) => { if (!dragRef.current) return; const taken = players.find(x=>x.active&&x.table_num===t&&x.seat===s&&x.id!==dragRef.current.id); if(taken){return} const {supabase}=await import('../lib/supabase'); await supabase.from('players').update({table_num:t,seat:s}).eq('id',dragRef.current.id); dragRef.current=null; onRefresh() }} selectedWinner={selectedWinner} selectedLoser={selectedLoser} />
+        : <SeatGrid players={players} tableNum={tableNum} onSeatClick={handleSeatClick} onEmptySeatClick={(t,s) => setQuickAdd({tableNum:t,seat:s})} onDragStart={p => { dragRef.current = p }} onDrop={async (t,s) => { if (!dragRef.current) return; const taken = players.find(x=>x.active&&x.table_num===t&&x.seat===s&&x.id!==dragRef.current.id); if(taken){return} const {supabase}=await import('../lib/supabase'); await supabase.from('players').update({table_num:t,seat:s}).eq('id',dragRef.current.id); dragRef.current=null; onRefresh() }} selectedWinner={selectedWinner} selectedLoser={selectedLoser} />
       }
 
       {selectedWinner && !selectedLoser && (

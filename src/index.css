@@ -33,7 +33,7 @@
 }
 [data-theme="light"] {
   --bg:#faf9f7; --bg2:#f3f0ea; --bg3:#ffffff; --bg4:#ede9e0;
-  --felt:#1c3a20;
+  --felt:#e8e4de;
   --accent:#b45309; --accent2:#d97706; --accent-dim:#92400e;
   --accent-bg:rgba(180,83,9,0.06); --accent-border:rgba(180,83,9,0.2);
   --green:#059669; --green-bg:rgba(5,150,105,0.08); --green-border:rgba(5,150,105,0.3);
