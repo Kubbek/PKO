@@ -18,7 +18,7 @@ function useLayout() {
 }
 
 export default function SpectatorView({ tournament, onLogout }) {
-  const [tab, setTab] = useState('ranking')
+  const [tab, setTab] = useState('tables')
   const [viewTable, setViewTable] = useState(null)
   const { mobile, landscape } = useLayout()
 
@@ -41,12 +41,7 @@ export default function SpectatorView({ tournament, onLogout }) {
     <div style={{ padding: compact ? '8px 14px' : '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
       <div>
         <div className="app-logo" style={{ fontSize: compact ? 17 : 20, letterSpacing: 2 }}>PKO TRACKER</div>
-        {!compact && (
-          <div className="live-badge" style={{ display: 'inline-flex', marginTop: 4 }}>
-            <div className="live-dot" />LIVE · {activePlayers.length} graczy
-          </div>
-        )}
-        {compact && <span className="live-badge" style={{ display: 'inline-flex', marginLeft: 8, padding: '2px 8px', fontSize: 10 }}><div className="live-dot" />{activePlayers.length}</span>}
+
       </div>
       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
         <ThemeSwitcher />
@@ -74,7 +69,7 @@ export default function SpectatorView({ tournament, onLogout }) {
           <div>
             <div style={{ fontWeight: 700, fontSize: 14, color: i === 0 ? 'var(--accent2)' : 'var(--text)' }}>
               {p.name}
-              {p.rebuys > 1 && <span className="badge badge-accent" style={{ marginLeft: 5 }}>R{p.rebuys}</span>}
+              {p.rebuys > 1 && <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'var(--accent-bg)', color: 'var(--accent)', border: '1px solid var(--accent-border)', display: 'inline-block', verticalAlign: 'middle' }}>R{p.rebuys - 1}</span>}
             </div>
             <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
               St.{p.table_num} · Msc.{p.seat}
@@ -110,7 +105,7 @@ export default function SpectatorView({ tournament, onLogout }) {
           <div>
             <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 700, marginRight: 8 }}>{p.seat}</span>
             <span style={{ fontWeight: 600, fontSize: 13 }}>{p.name}</span>
-            {p.rebuys > 1 && <span className="badge badge-accent" style={{ marginLeft: 5 }}>R{p.rebuys}</span>}
+            {p.rebuys > 1 && <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'var(--accent-bg)', color: 'var(--accent)', border: '1px solid var(--accent-border)', display: 'inline-block', verticalAlign: 'middle' }}>R{p.rebuys - 1}</span>}
           </div>
           <span style={{ fontFamily: 'var(--num-font)', fontSize: 17, color: 'var(--accent)' }}>{r2(p.bounty)} zł</span>
         </div>
@@ -132,7 +127,7 @@ export default function SpectatorView({ tournament, onLogout }) {
 
   const BottomNav = () => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 4, padding: '6px 10px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg3)', flexShrink: 0 }}>
-      {[['ranking', 'Ranking'], ['tables', 'Stoły'], ['feed', 'Eliminacje']].map(([id, icon, label]) => (
+      {[['tables', 'Stoły'], ['ranking', 'Ranking'], ['feed', 'Eliminacje']].map(([id, icon, label]) => (
         <button key={id} onClick={() => setTab(id)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '8px 4px', border: 'none', cursor: 'pointer', background: tab === id ? 'var(--accent-bg)' : 'transparent', borderRadius: 10, color: tab === id ? 'var(--accent)' : 'var(--text2)', transition: 'all 0.15s' }}>
           <span style={{ fontSize: 20 }}>{icon}</span>
           <span style={{ fontSize: 11, fontWeight: 600 }}>{label}</span>
@@ -143,7 +138,7 @@ export default function SpectatorView({ tournament, onLogout }) {
 
   // ── PORTRAIT (mobile only) ───────────────────────────
   if (mobile && !landscape) return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: 'var(--bg)', maxWidth: 520, margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100svh', background: 'var(--bg)', maxWidth: 520, margin: '0 auto' }}>
       <Header />
       <StatsStrip />
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px 8px' }}>
@@ -157,55 +152,31 @@ export default function SpectatorView({ tournament, onLogout }) {
 
   // ── LANDSCAPE ─────────────────────────────────────────
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: 'var(--bg)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100svh', background: 'var(--bg)' }}>
       <Header compact />
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 300px', overflow: 'hidden' }}>
-
-        {/* Left – main content */}
-        <div style={{ overflowY: 'auto', padding: '10px 12px' }}>
-          {/* Tab buttons horizontal */}
-          <div className="tab-bar" style={{ marginBottom: 10 }}>
-            {[['ranking', 'RANKING'], ['tables', 'STOŁY'], ['feed', 'ELIMINACJE']].map(([id, label]) => (
-              <button key={id} className={`tab-btn${tab === id ? ' active' : ''}`} onClick={() => setTab(id)} style={{ fontSize: 12 }}>{label}</button>
-            ))}
-          </div>
-          {tab === 'ranking' && <RankingList />}
-          {tab === 'tables' && (
-            <div>
-              <TableSelector />
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
-                {tables.map(t => (
-                  <div key={t} style={{ flex: '1 1 220px', maxWidth: 320 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--text3)', marginBottom: 6 }}>
-                      Stół {t} · {activePlayers.filter(p=>p.table_num===t).length}/9
-                    </div>
-                    <OvalTable players={activePlayers} tableNum={t} readOnly />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {tab === 'feed' && <Feed />}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 12px' }}>
+        <div className="tab-bar" style={{ marginBottom: 10 }}>
+          {[['tables', 'STOŁY'], ['ranking', 'RANKING'], ['feed', 'ELIMINACJE']].map(([id, label]) => (
+            <button key={id} className={`tab-btn${tab === id ? ' active' : ''}`} onClick={() => setTab(id)} style={{ fontSize: 12 }}>{label}</button>
+          ))}
         </div>
-
-        {/* Right – stats sidebar */}
-        <div style={{ borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg2)' }}>
-          <StatsStrip compact />
-          <div style={{ flex: 1, overflowY: 'auto', padding: '10px 12px' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--text3)', marginBottom: 8 }}>Ostatnie eliminacje</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {[...eliminations].reverse().slice(0, 15).map(e => (
-                <div key={e.id} style={{ padding: '6px 10px', background: 'var(--bg3)', borderRadius: 7, borderLeft: '2px solid var(--accent-dim)', fontSize: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span><strong style={{ color: 'var(--green)' }}>{e.winner_name}</strong><span style={{ color: 'var(--text3)', margin: '0 4px' }}>→</span><strong style={{ color: 'var(--red)' }}>{e.loser_name}</strong></span>
-                    <span style={{ fontFamily: 'var(--num-font)', color: 'var(--accent)', fontSize: 14 }}>+{e.pocket}</span>
+        {tab === 'ranking' && <RankingList />}
+        {tab === 'tables' && (
+          <div>
+            <TableSelector />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
+              {tables.map(t => (
+                <div key={t} style={{ flex: '1 1 220px', maxWidth: 320 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--text3)', marginBottom: 6 }}>
+                    Stół {t} · {activePlayers.filter(p=>p.table_num===t).length}/9
                   </div>
+                  <OvalTable players={activePlayers} tableNum={t} readOnly />
                 </div>
               ))}
-              {eliminations.length === 0 && <div style={{ color: 'var(--text3)', fontSize: 12 }}>Brak eliminacji</div>}
             </div>
           </div>
-        </div>
+        )}
+        {tab === 'feed' && <Feed />}
       </div>
     </div>
   )

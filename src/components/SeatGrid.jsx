@@ -27,7 +27,7 @@ export default function SeatGrid({ players, tableNum, onSeatClick, onSeatRightCl
             <div className="seat-player">
               <div className="sp-name">
                 {p.name}
-                {p.rebuys > 1 && <span className="badge badge-accent" style={{ marginLeft: 5, fontSize: 8 }}>R{p.rebuys}</span>}
+                {p.rebuys > 1 && <span style={{ marginLeft: 4, fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 20, background: 'var(--accent-bg)', color: 'var(--accent)', border: '1px solid var(--accent-border)', display: 'inline-block', verticalAlign: 'middle' }}>R{p.rebuys - 1}</span>}
               </div>
               <div className="sp-bounty">{r2(p.bounty)} zł</div>
               {p.pocket_bounty > 0 && <div className="sp-pocket">+{r2(p.pocket_bounty)} zł</div>}

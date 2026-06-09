@@ -109,7 +109,7 @@ export default function DealerView({ tournament, onRefresh, onLogout, tableNum }
   // Undo button
   const UndoBtn = (
     <button className="btn btn-ghost" style={{ fontSize: 12, padding: '6px 12px' }} onClick={undoLastElim}>
-      ↩ Cofnij
+      Cofnij
     </button>
   )
 
@@ -134,7 +134,7 @@ export default function DealerView({ tournament, onRefresh, onLogout, tableNum }
 
   // ── PORTRAIT MOBILE – siatka 3x3 ──────────────────────
   if (mobile && !landscape) return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: 'var(--bg)', maxWidth: 480, margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100svh', background: 'var(--bg)', maxWidth: 480, margin: '0 auto' }}>
       <ToastContainer />
       {Header(false)}
       {Hint && <div style={{ padding: '8px 14px 0', flexShrink: 0 }}>{Hint}</div>}
@@ -148,15 +148,17 @@ export default function DealerView({ tournament, onRefresh, onLogout, tableNum }
 
   // ── LANDSCAPE MOBILE – stół owalny ────────────────────
   if (mobile && landscape) return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: 'var(--bg)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100svh', background: 'var(--bg)' }}>
       <ToastContainer />
       {Header(true)}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '6px 10px', overflow: 'hidden' }}>
-        {Hint && <div style={{ marginBottom: 6, flexShrink: 0 }}>{Hint}</div>}
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
-          <div style={{ width: '100%', maxWidth: 500 }}>
-            <OvalTable players={players} tableNum={tableNum} onSeatClick={handleSeatClick} selectedWinner={selectedWinner} selectedLoser={null} />
-          </div>
+      {Hint && <div style={{ padding: '4px 10px 0', flexShrink: 0 }}>{Hint}</div>}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 10px', minHeight: 0, overflow: 'hidden' }}>
+        {/* Width drives the oval: limit so height never exceeds available space.
+            Available height ≈ 100dvh - header(~40px) - hint(~0-46px) - padding(8px)
+            OvalTable has paddingBottom:65% so height = width * 0.65 * (1 + chip overflow ~15%)
+            To keep stół within screen: maxWidth = availableHeight / 0.75 */}
+        <div style={{ width: '100%', maxWidth: 'min(560px, calc((100dvh - 100px) / 0.75))' }}>
+          <OvalTable players={players} tableNum={tableNum} onSeatClick={handleSeatClick} selectedWinner={selectedWinner} selectedLoser={null} />
         </div>
       </div>
     </div>

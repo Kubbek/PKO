@@ -18,7 +18,7 @@ export default function LoginView({ onLogin, tournament }) {
   const roles = [
     { id: 'td',        icon: '◈', label: 'Tournament Director', desc: 'Pełna kontrola' },
     { id: 'dealer',    icon: '◉', label: 'Dealer',              desc: 'Widok stołu' },
-    { id: 'spectator', icon: '◎', label: 'Gracz / Widz',        desc: 'Tylko odczyt' },
+    { id: 'spectator', icon: '◎', label: 'Gracz',        desc: 'Tylko odczyt' },
   ]
 
   return (
@@ -32,7 +32,6 @@ export default function LoginView({ onLogin, tournament }) {
           <div style={{ fontFamily: 'var(--header-font)', fontSize: 13, letterSpacing: 6, color: 'var(--text2)', marginTop: 2, textTransform: 'uppercase' }}>Tracker</div>
           {tournament && (
             <div style={{ marginTop: 14, display: 'inline-flex' }}>
-              <div className="live-badge"><div className="live-dot" />LIVE · {tournament.players?.filter(p => p.active).length || 0} graczy</div>
             </div>
           )}
         </div>

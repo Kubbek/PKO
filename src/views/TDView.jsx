@@ -159,7 +159,7 @@ function PlayerPopup({ player, players, eliminations, tournament, onClose, onBou
               {killed.map(e => (
                 <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 10px', background: 'var(--bg2)', borderRadius: 6, fontSize: 12 }}>
                   <span style={{ color: 'var(--text)' }}>{e.loser_name}</span>
-                  <span style={{ color: 'var(--green)', fontWeight: 600 }}>+{r2(e.loser_bounty_before / 2)} zł</span>
+                  <span style={{ color: 'var(--green)', fontWeight: 600 }}>+{r2(e.pocket)} zł</span>
                 </div>
               ))}
             </div>
@@ -224,6 +224,7 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
   const [showChop, setShowChop] = useState(false)
   const [popupPlayer, setPopupPlayer] = useState(null)
   const [movePlayer, setMovePlayer] = useState(null)
+  const [quickAdd, setQuickAdd] = useState(null) // {tableNum, seat}
   const winnerRef = useRef(null)
   const elimLock = useRef(false)
 
@@ -319,8 +320,7 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
 
   // Open add player modal pre-filled with table+seat
   function openAddPlayerAtSeat(tableNum, seat) {
-    setAddForm(f => ({ ...f, tableNum: String(tableNum), seat: String(seat), name: '', bounty: '' }))
-    setTab('add')
+    setQuickAdd({ tableNum, seat })
   }
 
   // Drag-and-drop seat reassignment
@@ -366,6 +366,36 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
         <MovePlayerModal player={movePlayer} activePlayers={activePlayers}
           onClose={() => setMovePlayer(null)} onDone={() => { show('Gracz przeniesiony'); onRefresh() }} />
       )}
+      {quickAdd && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300, padding: '1rem' }} onClick={() => setQuickAdd(null)}>
+          <div className="modal" style={{ maxWidth: 320 }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 style={{ margin: 0, fontSize: 18 }}>Stół {quickAdd.tableNum} · Miejsce {quickAdd.seat}</h2>
+              <button className="btn btn-ghost" style={{ padding: '4px 8px' }} onClick={() => setQuickAdd(null)}>✕</button>
+            </div>
+            <form onSubmit={async e => {
+              e.preventDefault()
+              const fd = new FormData(e.target)
+              const name = fd.get('name').trim()
+              if (!name) return
+              const bounty = tournament.init_bounty
+              const taken = activePlayers.find(p => p.table_num === quickAdd.tableNum && p.seat === quickAdd.seat)
+              if (taken) { show('Miejsce zajęte przez ' + taken.name); return }
+              const same = players.filter(p => p.name === name)
+              const rebuys = same.length > 0 ? Math.max(...same.map(p => p.rebuys || 1)) + 1 : 1
+              await supabase.from('players').insert({ tournament_id: tournament.id, name, table_num: quickAdd.tableNum, seat: quickAdd.seat, bounty, pocket_bounty: 0, active: true, rebuys })
+              show(`${name} dodany!`)
+              setQuickAdd(null); onRefresh()
+            }}>
+              <div className="field"><label>Imię / nick</label><input name="name" autoFocus placeholder="Imię gracza" /></div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" className="btn btn-ghost" onClick={() => setQuickAdd(null)}>Anuluj</button>
+                <button type="submit" className="btn btn-accent" style={{ flex: 1 }}>Dodaj gracza</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* HEADER */}
       <div className="app-header">
@@ -376,7 +406,6 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
         <div className='app-header-right' style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <ThemeSwitcher />
           <div style={{ width: 1, height: 20, background: 'var(--border2)' }} />
-          <div className="live-badge"><div className="live-dot" />{activePlayers.length} aktywnych</div>
           <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={undoLastElim}>↩ Cofnij</button>
           <button className="btn btn-ghost" style={{ fontSize: 12, color: 'var(--accent)' }} onClick={() => setShowChop(true)}>Chop</button>
           <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => setShowSetup(true)}>Nowy</button>
@@ -420,18 +449,21 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
                 </button>
               ))}
             </div>
-            <div style={{ fontSize: 12, fontWeight: 500, color: !selectedWinner?'var(--text2)':!selectedLoser?'var(--green)':'var(--accent)' }}>
-              {!selectedWinner?'Klik eliminującego':!selectedLoser?'→ Klik wyeliminowanego':'Przetwarzanie...'}
-            </div>
+
           </div>
 
-          {/* All tables in wrapping grid */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'flex-start' }}>
+          {/* All tables in wrapping grid
+               S = 25% of container (4 per row)
+               M = 50% of container (2 per row)
+               L = 100% of container (1 per row)
+               chipScale passed to OvalTable so chips resize with table */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
             {validTables.map(t => {
-              const tSize = { s: 200, m: 300, l: 420 }[tableSize]
+              const pct = { s: 'calc(25% - 12px)', m: 'calc(50% - 8px)', l: '100%' }[tableSize]
+              const chipScale = { s: 0.55, m: 0.75, l: 1 }[tableSize]
               return (
-                <div key={t} style={{ flex: `1 1 ${tSize}px`, maxWidth: tSize + 40, minWidth: Math.min(tSize, 200) }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div key={t} style={{ flex: `0 0 ${pct}`, minWidth: 0, width: pct }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                     <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--text3)' }}>
                       Stół {t} <span style={{ fontWeight: 400 }}>· {activePlayers.filter(p=>p.table_num===t).length}/9</span>
                     </div>
@@ -439,7 +471,7 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
                   {tableView === 'oval'
                     ? <OvalTable players={activePlayers} tableNum={t} onSeatClick={handleSeatClick}
                         onSeatRightClick={handleSeatRightClick} onDragStart={handleDragStart} onDrop={handleDrop}
-                        onEmptySeatClick={openAddPlayerAtSeat}
+                        onEmptySeatClick={openAddPlayerAtSeat} chipScale={chipScale}
                         selectedWinner={selectedWinner} selectedLoser={selectedLoser} />
                     : <SeatGrid players={activePlayers} tableNum={t} onSeatClick={handleSeatClick}
                         onSeatRightClick={handleSeatRightClick} onDragStart={handleDragStart} onDrop={handleDrop}
@@ -471,7 +503,7 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
                 <div className="num" style={{ fontSize: 20, color: i===0?'var(--accent)':'var(--text3)', textAlign: 'center', fontWeight: 700 }}>{i===0?'♛':i+1}</div>
                 <div>
                   <span style={{ fontWeight: 600, fontSize: 14 }}>{p.name}</span>
-                  {p.rebuys > 1 && <span className="badge badge-accent" style={{ marginLeft: 6 }}>R{p.rebuys}</span>}
+                  {p.rebuys > 1 && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'var(--accent-bg)', color: 'var(--accent)', border: '1px solid var(--accent-border)', display: 'inline-block', verticalAlign: 'middle' }}>R{p.rebuys - 1}</span>}
                   <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
                     Stół {p.table_num} · Miejsce {p.seat}
                     <button style={{ fontSize: 10, color: 'var(--text3)', background: 'none', border: '1px solid var(--border)', borderRadius: 4, padding: '1px 6px', cursor: 'pointer' }}
