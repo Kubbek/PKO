@@ -370,7 +370,8 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
   )
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1rem 1.25rem' }}>
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 0 1.5rem', background: '#0e1013', minHeight: '100vh', backgroundImage: 'radial-gradient(900px 600px at 50% -10%, rgba(233,185,73,.07), transparent 62%)' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 28px 1.5rem' }}>
       <ToastContainer />
 
       {showChop && (
@@ -397,8 +398,15 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
               const name = fd.get('name').trim()
               if (!name) return
               const bounty = tournament.init_bounty
-              const taken = activePlayers.find(p => p.table_num === quickAdd.tableNum && p.seat === quickAdd.seat)
-              if (taken) { show('Miejsce zajęte przez ' + taken.name); return }
+              // Check directly in DB to avoid stale local state
+              const { data: existing } = await supabase.from('players')
+                .select('id, name')
+                .eq('tournament_id', tournament.id)
+                .eq('table_num', quickAdd.tableNum)
+                .eq('seat', quickAdd.seat)
+                .eq('active', true)
+                .maybeSingle()
+              if (existing) { show('Miejsce zajęte przez ' + existing.name); return }
               const same = players.filter(p => p.name === name)
               const rebuys = same.length > 0 ? Math.max(...same.map(p => p.rebuys || 1)) + 1 : 1
               await supabase.from('players').insert({ tournament_id: tournament.id, name, table_num: quickAdd.tableNum, seat: quickAdd.seat, bounty, pocket_bounty: 0, active: true, rebuys })
@@ -416,33 +424,50 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
       )}
 
       {/* HEADER */}
-      <div className="app-header">
-        <div>
-          <span className="app-logo">PKO</span>
-          <span className="app-logo-sub">TRACKER · TD</span>
+      <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px', borderBottom: '1px solid rgba(233,185,73,.14)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'linear-gradient(150deg,#f3cf68,#cf9a26)', color: '#3a2606', fontWeight: 800, fontSize: 18, boxShadow: '0 0 18px rgba(233,185,73,.25)' }}>♠</div>
+          <div>
+            <div style={{ fontSize: 11, letterSpacing: '.22em', color: '#bda05f', fontWeight: 700, textTransform: 'uppercase' }}>PKO Bounty Tracker</div>
+            <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-.01em' }}>Tournament Director <b style={{ color: '#f0c75c' }}>· TD</b></div>
+          </div>
         </div>
-        <div className='app-header-right' style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <ThemeSwitcher />
-          <div style={{ width: 1, height: 20, background: 'var(--border2)' }} />
-          <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={undoLastElim}>Cofnij</button>
-          <button className="btn btn-ghost" style={{ fontSize: 12, color: 'var(--accent)' }} onClick={() => setShowChop(true)}>Chop</button>
-          <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => setShowSetup(true)}>Nowy</button>
-          <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={onLogout}>Wyloguj</button>
+          {[
+            { label: 'Cofnij', action: undoLastElim },
+            { label: 'Chop', action: () => setShowChop(true), gold: true },
+            { label: 'Nowy turniej', action: () => setShowSetup(true) },
+            { label: 'Wyloguj', action: onLogout },
+          ].map(({ label, action, gold }) => (
+            <button key={label} onClick={action} style={{ height: 34, padding: '0 14px', borderRadius: 999, border: gold ? 'none' : '1px solid rgba(255,255,255,.08)', background: gold ? 'linear-gradient(150deg,#f3cf68,#cf9a26)' : '#181b20', color: gold ? '#3a2606' : '#c2cad1', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'Manrope,sans-serif', letterSpacing: '.04em', boxShadow: gold ? '0 4px 14px rgba(233,185,73,.22)' : 'none' }}>
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* STATS */}
-      <div className='stats-grid-4' style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: '1.5rem' }}>
-        <div className="stat-card"><div className="sl">Aktywni gracze</div><div className="sv accent num">{activePlayers.length}</div></div>
-        <div className="stat-card green"><div className="sl">Pula bounty</div><div className="sv num" style={{ fontSize: 22 }}>{r2(activePlayers.reduce((s, p) => s + p.bounty, 0))} <span style={{ fontSize: 14, color: 'var(--text2)' }}>zł</span></div></div>
-        <div className="stat-card"><div className="sl">Wypłacono</div><div className="sv num" style={{ fontSize: 22 }}>{r2(players.reduce((s, p) => s + p.pocket_bounty, 0))} <span style={{ fontSize: 14, color: 'var(--text2)' }}>zł</span></div></div>
-        <div className="stat-card"><div className="sl">Eliminacje</div><div className="sv num">{eliminations.length}</div></div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: '1.25rem' }}>
+        {[
+          { label: 'Gracze w grze', value: activePlayers.length, green: true, big: true },
+          { label: 'Pula bounty', value: r2(activePlayers.reduce((s, p) => s + p.bounty, 0)) + ' zł', big: false },
+          { label: 'Wypłacono', value: r2(players.reduce((s, p) => s + p.pocket_bounty, 0)) + ' zł', big: false },
+          { label: 'Eliminacje', value: eliminations.length, big: true },
+        ].map(({ label, value, green, big }) => (
+          <div key={label} style={{ background: '#16191e', border: '1px solid rgba(255,255,255,.06)', borderRadius: 16, padding: '14px 18px' }}>
+            <div style={{ fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: '#8a949d', fontWeight: 700 }}>{label}</div>
+            <div style={{ fontFamily: "'Saira Condensed',sans-serif", fontWeight: 600, fontSize: big ? 40 : 32, lineHeight: .92, color: green ? '#34e29a' : '#fff', marginTop: 4, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+          </div>
+        ))}
       </div>
 
       {/* TABS */}
-      <div className="tab-bar" style={{ marginBottom: '1.5rem' }}>
-        {[['tables','Stoły'],['players','Gracze'],['log','Historia'],['add','Dodaj gracza']].map(([id, label]) => (
-          <button key={id} className={`tab-btn${tab===id?' active':''}`} onClick={() => setTab(id)}>{label}</button>
+      <div style={{ display: 'flex', gap: 4, marginBottom: '1.25rem', background: '#15181d', padding: 4, borderRadius: 12, border: '1px solid rgba(255,255,255,.06)' }}>
+        {[['tables','STOŁY'],['players','GRACZE'],['log','HISTORIA'],['add','DODAJ GRACZA']].map(([id, label]) => (
+          <button key={id} onClick={() => setTab(id)} style={{ flex: 1, padding: '8px 12px', fontSize: 11, fontWeight: 800, letterSpacing: '.12em', border: 'none', borderRadius: 9, cursor: 'pointer', fontFamily: 'Manrope,sans-serif', transition: 'all 0.15s', background: tab===id ? 'linear-gradient(150deg,rgba(243,207,104,.15),rgba(207,154,38,.08))' : 'transparent', color: tab===id ? '#f0c75c' : '#7f8b95', boxShadow: tab===id ? 'inset 0 0 0 1px rgba(233,185,73,.25)' : 'none' }}>
+            {label}
+          </button>
         ))}
       </div>
 
@@ -522,23 +547,24 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
       {/* ── PLAYERS TAB ── */}
       {tab === 'players' && (
         <div>
-          <div className="section-title">Ranking bounty <span style={{ color: 'var(--text3)', fontSize: 10, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>– prawy klik = szczegóły / edycja</span></div>
+          <div style={{ fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: '#8a949d', fontWeight: 700, marginBottom: 10 }}>
+            Ranking bounty <span style={{ color: '#4a5260', fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>· prawy klik = edycja</span>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[...activePlayers].sort((a, b) => b.bounty - a.bounty).map((p, i) => (
-              <div key={p.id} className={`player-row fade-up${i===0?' top':''}`} style={{ animationDelay: `${i*0.03}s`, cursor: 'context-menu', gridTemplateColumns: 'clamp(28px,36px,36px) 1fr auto auto' }}
-                onContextMenu={e => { e.preventDefault(); setPopupPlayer(p) }}>
-                <div className="num" style={{ fontSize: 20, color: i===0?'var(--accent)':'var(--text3)', textAlign: 'center', fontWeight: 700 }}>{i===0?'♛':i+1}</div>
+              <div key={p.id} onContextMenu={e => { e.preventDefault(); setPopupPlayer(p) }}
+                style={{ display: 'grid', gridTemplateColumns: '40px 1fr auto auto', gap: 12, padding: '12px 16px', background: i === 0 ? 'linear-gradient(160deg,rgba(233,185,73,.13),#16191e 60%)' : '#16191e', border: `1px solid ${i === 0 ? 'rgba(233,185,73,.32)' : 'rgba(255,255,255,.06)'}`, borderRadius: 14, alignItems: 'center', cursor: 'context-menu', transition: 'border-color 0.15s' }}>
+                <div style={{ fontFamily: "'Saira Condensed',sans-serif", fontSize: 22, color: i === 0 ? '#f0c75c' : '#4a5260', textAlign: 'center', fontWeight: 600, lineHeight: 1 }}>{i === 0 ? '♛' : i + 1}</div>
                 <div>
-                  <span style={{ fontWeight: 600, fontSize: 14 }}>{p.name}</span>
-                  {p.rebuys > 1 && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'var(--accent-bg)', color: 'var(--accent)', border: '1px solid var(--accent-border)', display: 'inline-block', verticalAlign: 'middle' }}>R{p.rebuys - 1}</span>}
-                  <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontWeight: 700, fontSize: 14, color: i === 0 ? '#f0c75c' : '#eef1f3' }}>{p.name}</span>
+                  {p.rebuys > 1 && <span style={{ marginLeft: 7, fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 20, background: 'rgba(233,185,73,.12)', color: '#f0c75c', border: '1px solid rgba(233,185,73,.28)', display: 'inline-block', verticalAlign: 'middle' }}>R{p.rebuys - 1}</span>}
+                  <div style={{ fontSize: 11, color: '#6f7984', marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
                     Stół {p.table_num} · Miejsce {p.seat}
-                    <button style={{ fontSize: 10, color: 'var(--text3)', background: 'none', border: '1px solid var(--border)', borderRadius: 4, padding: '1px 6px', cursor: 'pointer' }}
-                      onClick={() => setMovePlayer(p)}>Przenieś</button>
+                    <button onClick={() => setMovePlayer(p)} style={{ fontSize: 10, color: '#8a949d', background: 'none', border: '1px solid rgba(255,255,255,.1)', borderRadius: 5, padding: '1px 7px', cursor: 'pointer', fontFamily: 'Manrope,sans-serif' }}>Przenieś</button>
                   </div>
                 </div>
-                <div className="num" style={{ fontSize: 20, color: 'var(--accent)', textAlign: 'right' }}>{r2(p.bounty)} <span style={{ fontSize: 13, color: 'var(--text2)' }}>zł</span></div>
-                <div style={{ textAlign: 'right', fontSize: 12, color: 'var(--green)', fontWeight: 600 }}>+{r2(p.pocket_bounty)} zł</div>
+                <div style={{ fontFamily: "'Saira Condensed',sans-serif", fontSize: 22, color: '#f0c75c', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{r2(p.bounty)} <span style={{ fontSize: 13, color: '#6f7984', fontFamily: 'Manrope,sans-serif', fontWeight: 600 }}>zł</span></div>
+                <div style={{ textAlign: 'right', fontSize: 12, color: '#34e29a', fontWeight: 700 }}>+{r2(p.pocket_bounty)} zł</div>
               </div>
             ))}
           </div>
@@ -548,16 +574,18 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
       {/* ── LOG TAB ── */}
       {tab === 'log' && (
         <div>
-          <div className="section-title">Historia eliminacji</div>
-          {eliminations.length === 0 && <div style={{ color: 'var(--text3)', fontSize: 13 }}>Brak eliminacji</div>}
+          <div style={{ fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: '#8a949d', fontWeight: 700, marginBottom: 10 }}>Historia eliminacji</div>
+          {eliminations.length === 0 && <div style={{ color: '#4a5260', fontSize: 13 }}>Brak eliminacji</div>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {[...eliminations].reverse().map((e, i) => (
-              <div key={e.id} className="log-entry fade-up" style={{ animationDelay: `${i*0.02}s` }}>
-                <span className="log-amount">+{e.pocket} zł</span>
-                <strong>{e.winner_name}</strong>
-                <span style={{ color: 'var(--text3)' }}> eliminuje </span>
-                <strong style={{ color: 'var(--red)' }}>{e.loser_name}</strong>
-                <span style={{ color: 'var(--text3)' }}> · +{e.on_head} zł na głowę</span>
+              <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 16px', background: '#16191e', border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, fontSize: 13 }}>
+                <div>
+                  <strong style={{ color: '#eef1f3', fontWeight: 700 }}>{e.winner_name}</strong>
+                  <span style={{ color: '#6f7984', margin: '0 6px' }}>eliminuje</span>
+                  <strong style={{ color: '#e05060', fontWeight: 700 }}>{e.loser_name}</strong>
+                  <span style={{ color: '#4a5260' }}> · +{e.on_head} zł na głowę</span>
+                </div>
+                <span style={{ fontFamily: "'Saira Condensed',sans-serif", fontSize: 18, color: '#f0c75c', fontWeight: 600, fontVariantNumeric: 'tabular-nums', flexShrink: 0, marginLeft: 12 }}>+{e.pocket} zł</span>
               </div>
             ))}
           </div>
@@ -583,6 +611,7 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
           </form>
         </div>
       )}
+      </div>
     </div>
   )
 }
