@@ -67,7 +67,7 @@ body{
   font-family:'DM Sans',sans-serif;
   background:var(--body-bg);
   color:var(--text);
-  min-height:100vh;
+  min-height:100svh;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
 }

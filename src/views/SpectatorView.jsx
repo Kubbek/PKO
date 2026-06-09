@@ -10,9 +10,18 @@ function useLayout() {
   })
   const [layout, setLayout] = useState(get)
   useEffect(() => {
-    const fn = () => setLayout(get())
+    const fn = () => {
+      // Small delay on iOS - dimensions update after orientationchange event
+      setTimeout(() => setLayout(get()), 50)
+    }
     window.addEventListener('resize', fn)
-    return () => window.removeEventListener('resize', fn)
+    window.addEventListener('orientationchange', fn)
+    if (screen.orientation) screen.orientation.addEventListener('change', fn)
+    return () => {
+      window.removeEventListener('resize', fn)
+      window.removeEventListener('orientationchange', fn)
+      if (screen.orientation) screen.orientation.removeEventListener('change', fn)
+    }
   }, [])
   return layout
 }
@@ -30,7 +39,7 @@ export default function SpectatorView({ tournament, onLogout }) {
   const currentTable = viewTable || tables[0] || 1
 
   if (!tournament) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: 12, background: 'var(--bg)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100svh', flexDirection: 'column', gap: 12, background: 'var(--bg)' }}>
       <div className="app-logo" style={{ fontSize: 40 }}>PKO</div>
       <div style={{ color: 'var(--text2)', fontSize: 14 }}>Turniej nie został jeszcze uruchomiony...</div>
     </div>
@@ -45,7 +54,7 @@ export default function SpectatorView({ tournament, onLogout }) {
       </div>
       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
         <ThemeSwitcher />
-        <button className="btn btn-ghost" style={{ fontSize: 11, padding: '4px 8px' }} onClick={onLogout}>← Wróć</button>
+        <button className="btn btn-ghost" style={{ fontSize: 18, padding: '4px 10px' }} onClick={onLogout}>←</button>
       </div>
     </div>
   )
@@ -138,7 +147,7 @@ export default function SpectatorView({ tournament, onLogout }) {
 
   // ── PORTRAIT (mobile only) ───────────────────────────
   if (mobile && !landscape) return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100svh', background: 'var(--bg)', maxWidth: 520, margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100svh', background: 'var(--bg)', width: '100%' }}>
       <Header />
       <StatsStrip />
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px 8px' }}>

@@ -225,6 +225,7 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
   const [popupPlayer, setPopupPlayer] = useState(null)
   const [movePlayer, setMovePlayer] = useState(null)
   const [quickAdd, setQuickAdd] = useState(null) // {tableNum, seat}
+  const [extraTables, setExtraTables] = useState([]) // manually added empty tables
   const winnerRef = useRef(null)
   const elimLock = useRef(false)
 
@@ -232,7 +233,8 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
   const eliminations = tournament?.eliminations || []
   const activePlayers = players.filter(p => p.active)
   const tables = [...new Set(activePlayers.map(p => p.table_num))].sort((a, b) => a - b)
-  const validTables = tables.length > 0 ? tables : [1]
+  const allTables = [...new Set([...tables, ...extraTables])].sort((a, b) => a - b)
+  const validTables = allTables.length > 0 ? allTables : [1]
   const currentTable = validTables.includes(viewTable) ? viewTable : validTables[0]
 
   const sizeMin = { s: 220, m: 300, l: 420 }
@@ -323,6 +325,22 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
     setQuickAdd({ tableNum, seat })
   }
 
+  // Add/remove empty tables
+  function addTable() {
+    const next = validTables.length > 0 ? Math.max(...validTables) + 1 : 1
+    if (next > 20) { show('Maksymalnie 20 stołów'); return }
+    setExtraTables(t => [...t, next])
+  }
+
+  function removeLastTable() {
+    // Remove last table only if it has no active players
+    const last = Math.max(...validTables)
+    const hasPlayers = activePlayers.some(p => p.table_num === last)
+    if (hasPlayers) { show(`Stół ${last} ma aktywnych graczy`); return }
+    setExtraTables(t => t.filter(x => x !== last))
+    // Also remove from tables that have no active players (already derived)
+  }
+
   // Drag-and-drop seat reassignment
   const dragRef = useRef(null)
 
@@ -406,7 +424,7 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
         <div className='app-header-right' style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <ThemeSwitcher />
           <div style={{ width: 1, height: 20, background: 'var(--border2)' }} />
-          <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={undoLastElim}>↩ Cofnij</button>
+          <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={undoLastElim}>Cofnij</button>
           <button className="btn btn-ghost" style={{ fontSize: 12, color: 'var(--accent)' }} onClick={() => setShowChop(true)}>Chop</button>
           <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => setShowSetup(true)}>Nowy</button>
           <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={onLogout}>Wyloguj</button>
@@ -441,6 +459,15 @@ export default function TDView({ tournament, onRefresh, onLogout }) {
                   {sz}
                 </button>
               ))}
+              <div style={{ width: 1, height: 16, background: 'var(--border2)', margin: '0 4px' }} />
+              <button onClick={removeLastTable} title="Usuń ostatni pusty stół"
+                style={{ width: 28, height: 28, border: '1px solid var(--accent-border)', background: 'var(--accent-bg)', color: 'var(--accent)', borderRadius: '50%', cursor: 'pointer', fontSize: 18, fontWeight: 700, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                −
+              </button>
+              <button onClick={addTable} title="Dodaj pusty stół"
+                style={{ width: 28, height: 28, border: '1px solid var(--accent-border)', background: 'var(--accent-bg)', color: 'var(--accent)', borderRadius: '50%', cursor: 'pointer', fontSize: 18, fontWeight: 700, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                +
+              </button>
               <div style={{ width: 1, height: 16, background: 'var(--border2)', margin: '0 4px' }} />
               {[['oval','⬭'],['grid','⊞']].map(([v,icon]) => (
                 <button key={v} onClick={() => setTableView(v)}

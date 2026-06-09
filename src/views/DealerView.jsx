@@ -13,9 +13,18 @@ function useLayout() {
   })
   const [layout, setLayout] = useState(get)
   useEffect(() => {
-    const fn = () => setLayout(get())
+    const fn = () => {
+      // Small delay on iOS - dimensions update after orientationchange event
+      setTimeout(() => setLayout(get()), 50)
+    }
     window.addEventListener('resize', fn)
-    return () => window.removeEventListener('resize', fn)
+    window.addEventListener('orientationchange', fn)
+    if (screen.orientation) screen.orientation.addEventListener('change', fn)
+    return () => {
+      window.removeEventListener('resize', fn)
+      window.removeEventListener('orientationchange', fn)
+      if (screen.orientation) screen.orientation.removeEventListener('change', fn)
+    }
   }, [])
   return layout
 }
@@ -89,7 +98,7 @@ export default function DealerView({ tournament, onRefresh, onLogout, tableNum }
   }
 
   if (!tournament) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: 8, background: 'var(--bg)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100svh', flexDirection: 'column', gap: 8, background: 'var(--bg)' }}>
       <div className="app-logo" style={{ fontSize: 32 }}>STÓŁ {tableNum}</div>
       <div style={{ fontSize: 13, color: 'var(--text2)' }}>Oczekiwanie na start...</div>
     </div>
@@ -134,7 +143,7 @@ export default function DealerView({ tournament, onRefresh, onLogout, tableNum }
 
   // ── PORTRAIT MOBILE – siatka 3x3 ──────────────────────
   if (mobile && !landscape) return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100svh', background: 'var(--bg)', maxWidth: 480, margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100svh', background: 'var(--bg)', width: '100%' }}>
       <ToastContainer />
       {Header(false)}
       {Hint && <div style={{ padding: '8px 14px 0', flexShrink: 0 }}>{Hint}</div>}
@@ -157,7 +166,7 @@ export default function DealerView({ tournament, onRefresh, onLogout, tableNum }
             Available height ≈ 100dvh - header(~40px) - hint(~0-46px) - padding(8px)
             OvalTable has paddingBottom:65% so height = width * 0.65 * (1 + chip overflow ~15%)
             To keep stół within screen: maxWidth = availableHeight / 0.75 */}
-        <div style={{ width: '100%', maxWidth: 'min(560px, calc((100dvh - 100px) / 0.75))' }}>
+        <div style={{ width: '100%', maxWidth: 'min(560px, calc((100svh - 100px) / 0.75))' }}>
           <OvalTable players={players} tableNum={tableNum} onSeatClick={handleSeatClick} selectedWinner={selectedWinner} selectedLoser={null} />
         </div>
       </div>
@@ -166,7 +175,7 @@ export default function DealerView({ tournament, onRefresh, onLogout, tableNum }
 
   // ── DESKTOP ───────────────────────────────────────────
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100svh', background: 'var(--bg)' }}>
       <ToastContainer />
       {Header(false)}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 24px', maxWidth: 900, margin: '0 auto', width: '100%' }}>

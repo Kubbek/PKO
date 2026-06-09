@@ -7,15 +7,9 @@ export default function OvalTable({ players, tableNum, onSeatClick, onSeatRightC
   const tablePlayers = players.filter(p => p.table_num === tableNum && p.active)
 
   return (
-    <div style={{ position: 'relative', width: '100%', paddingBottom: '65%', margin: '8px 0 12px' }}>
-      <div style={{
-        position: 'absolute', inset: 0,
-        borderRadius: '50%',
-        background: 'var(--felt, #e8e4de)',
-        border: '4px solid var(--accent-dim, #92400e)',
-        boxSizing: 'border-box',
-        overflow: 'visible',
-      }}>
+    <div style={{ width: '100%', padding: '0 7%', margin: '8px 0 12px', boxSizing: 'border-box' }}>
+      <div style={{ position: 'relative', width: '100%', paddingBottom: '65%' }}>
+        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--felt, #e8e4de)', border: '4px solid var(--accent-dim, #92400e)', boxSizing: 'border-box', overflow: 'visible' }}>
         <div style={{ position: 'absolute', inset: '10%', borderRadius: '50%', border: '2px solid var(--accent-border, rgba(180,83,9,0.2))', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontFamily: "'Bebas Neue','DM Sans',sans-serif", fontSize: 'clamp(14px,3vw,24px)', letterSpacing: 3, color: 'var(--accent-border,rgba(180,83,9,0.3))', pointerEvents: 'none', userSelect: 'none', whiteSpace: 'nowrap' }}>
           STÓŁ {tableNum}
@@ -86,6 +80,7 @@ export default function OvalTable({ players, tableNum, onSeatClick, onSeatRightC
             </div>
           )
         })}
+        </div>
       </div>
     </div>
   )
