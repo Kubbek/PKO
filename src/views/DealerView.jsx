@@ -140,10 +140,10 @@ export default function DealerView({ tournament, onRefresh, onLogout, tableNum }
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100svh', background: 'var(--bg)', backgroundImage: 'var(--gradient-top)' }}>
       <ToastContainer />
       {Header(false)}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 24px', maxWidth: 900, margin: '0 auto', width: '100%' }}>
-        {Hint && <div style={{ width: '100%', maxWidth: 600, marginBottom: 14 }}>{Hint}</div>}
-        <div style={{ width: '100%', maxWidth: 600 }}>
-          <OvalTable {...OvalProps} />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 24px', maxWidth: 600, margin: '0 auto', width: '100%' }}>
+        {Hint && <div style={{ width: '100%', marginBottom: 14 }}>{Hint}</div>}
+        <div style={{ width: '100%' }}>
+          <SeatGrid {...GridProps} />
         </div>
       </div>
     </div>

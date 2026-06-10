@@ -36,14 +36,7 @@ export default function LoginView({ onLogin, tournament }) {
               <div style={{ fontFamily: 'Saira Condensed, sans-serif', fontSize: 32, fontWeight: 700, color: 'var(--gold)', letterSpacing: 1, lineHeight: 1 }}>PKO TRACKER</div>
             </div>
           </div>
-          {tournament && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'var(--green-bg)', border: '1px solid var(--green-border)', padding: '4px 14px', borderRadius: 20, marginTop: 8 }}>
-              <div style={{ width: 7, height: 7, background: 'var(--green)', borderRadius: '50%', animation: 'pulse 2s infinite' }} />
-              <span style={{ fontSize: 11, color: 'var(--green)', fontWeight: 700, letterSpacing: '.1em' }}>
-                NA ŻYWO · {tournament.players?.filter(p => p.active).length || 0} graczy
-              </span>
-            </div>
-          )}
+
         </div>
 
         <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 20, padding: '1.75rem' }}>

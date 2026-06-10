@@ -9,77 +9,83 @@ export default function OvalTable({ players, tableNum, onSeatClick, onSeatRightC
   return (
     <div style={{ width: '100%', padding: '0 7%', margin: '8px 0 12px', boxSizing: 'border-box' }}>
       <div style={{ position: 'relative', width: '100%', paddingBottom: '65%' }}>
-        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--felt, #061008)', border: '4px solid var(--accent-dim, #92400e)', boxSizing: 'border-box', overflow: 'visible' }}>
-        <div style={{ position: 'absolute', inset: '10%', borderRadius: '50%', border: '2px solid var(--accent-border, rgba(180,83,9,0.2))', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontFamily: "'Bebas Neue','DM Sans',sans-serif", fontSize: 'clamp(14px,3vw,24px)', letterSpacing: 3, color: 'var(--accent-border,rgba(180,83,9,0.3))', pointerEvents: 'none', userSelect: 'none', whiteSpace: 'nowrap' }}>
-          STÓŁ {tableNum}
-        </div>
+        <div style={{
+          position: 'absolute', inset: 0, borderRadius: '50%',
+          background: '#061008',
+          border: '4px solid rgba(233,185,73,.35)',
+          boxSizing: 'border-box', overflow: 'visible',
+        }}>
+          {/* Inner ring */}
+          <div style={{ position: 'absolute', inset: '10%', borderRadius: '50%', border: '1.5px solid rgba(233,185,73,.15)', pointerEvents: 'none' }} />
+          {/* Table label */}
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontFamily: "'Saira Condensed',sans-serif", fontSize: `clamp(14px,3vw,22px)`, letterSpacing: 3, color: 'rgba(233,185,73,.18)', pointerEvents: 'none', userSelect: 'none', whiteSpace: 'nowrap', fontWeight: 700 }}>
+            STÓŁ {tableNum}
+          </div>
 
-        {seats.map(s => {
-          const angle = ((s - 1) / 9) * 2 * Math.PI - Math.PI / 2
-          const x = 50 + 50 * Math.cos(angle)
-          const y = 50 + 50 * Math.sin(angle)
-          const p = tablePlayers.find(pp => pp.seat === s)
-          const isWinner = p && selectedWinner === p.id
-          const isLoser  = p && selectedLoser  === p.id
-          const isHovered = hoveredSeat === s
+          {seats.map(s => {
+            const angle = ((s - 1) / 9) * 2 * Math.PI - Math.PI / 2
+            const x = 50 + 50 * Math.cos(angle)
+            const y = 50 + 50 * Math.sin(angle)
+            const p = tablePlayers.find(pp => pp.seat === s)
+            const isWinner = p && selectedWinner === p.id
+            const isLoser  = p && selectedLoser  === p.id
+            const isHovered = hoveredSeat === s
+            const chipW = Math.round(108 * chipScale)
+            const chipWMax = Math.round(138 * chipScale)
+            const fName = Math.round(16 * chipScale)
+            const fBounty = Math.round(16 * chipScale)
+            const fNum = Math.round(9 * chipScale)
 
-          if (p) {
+            const borderColor = isWinner ? 'var(--green)'
+              : isLoser  ? 'var(--red)'
+              : p        ? 'rgba(255,255,255,.14)'
+              : isHovered && !readOnly ? 'rgba(233,185,73,.5)'
+              :             'rgba(255,255,255,.07)'
+
+            const bg = isWinner ? 'rgba(74,222,128,.12)'
+              : isLoser  ? 'rgba(248,113,113,.12)'
+              : p        ? '#16191e'
+              : isHovered && !readOnly ? 'rgba(233,185,73,.08)'
+              :             'rgba(255,255,255,.03)'
+
             return (
               <div key={s} style={{
-                position: 'absolute', left: x+'%', top: y+'%',
+                position: 'absolute', left: x + '%', top: y + '%',
                 transform: 'translate(-50%,-50%)',
-                width: `clamp(${Math.round(108*chipScale)}px,15%,${Math.round(138*chipScale)}px)`,
-                background: isWinner ? 'var(--green-bg,rgba(5,150,105,0.08))' : isLoser ? 'var(--red-bg,rgba(220,38,38,0.07))' : 'var(--bg3,#fff)',
-                border: `2px solid ${isWinner ? 'var(--green,#059669)' : isLoser ? 'var(--red,#dc2626)' : 'var(--border2,rgba(0,0,0,0.16))'}`,
-                borderRadius: 8, padding: '5px 4px 4px', textAlign: 'center',
-                cursor: readOnly ? 'default' : 'pointer',
+                width: `clamp(${chipW}px,${Math.round(13*chipScale)}%,${chipWMax}px)`,
+                background: bg,
+                border: `2px ${p || (isHovered && !readOnly) ? 'solid' : 'dashed'} ${borderColor}`,
+                borderRadius: 10, padding: '6px 5px 5px', textAlign: 'center',
+                cursor: p && !readOnly ? 'pointer' : readOnly ? 'default' : 'pointer',
                 transition: 'all 0.15s', zIndex: 2,
-                boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+                boxShadow: p ? '0 2px 8px rgba(0,0,0,.4)' : 'none',
               }}
-                onClick={() => !readOnly && onSeatClick?.(p)}
-                onContextMenu={e => { e.preventDefault(); !readOnly && onSeatRightClick?.(p, e) }}
-                draggable={!readOnly}
-                onDragStart={() => !readOnly && onDragStart?.(p)}
+                onClick={() => { if (!readOnly) { if (p) onSeatClick?.(p); else onEmptySeatClick?.(tableNum, s) } }}
+                onContextMenu={e => { e.preventDefault(); p && !readOnly && onSeatRightClick?.(p, e) }}
+                draggable={!!p && !readOnly}
+                onDragStart={() => p && !readOnly && onDragStart?.(p)}
                 onDragOver={e => e.preventDefault()}
                 onDrop={() => !readOnly && onDrop?.(tableNum, s)}
+                onMouseEnter={() => !readOnly && setHoveredSeat(s)}
+                onMouseLeave={() => setHoveredSeat(null)}
               >
-                <div style={{ position: 'absolute', top: 2, right: 4, fontSize: 9, fontWeight: 700, color: 'var(--text3,#a8a29e)', lineHeight: 1 }}>{s}</div>
-                <div style={{ fontSize: Math.round(16*chipScale), fontWeight: 700, color: isWinner ? 'var(--green,#059669)' : isLoser ? 'var(--red,#dc2626)' : 'var(--text,#1c1917)', lineHeight: 1.25, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingTop: 2 }}>
-                  {p.name}{p.rebuys > 1 && <span style={{ fontSize: Math.round(8*chipScale), fontWeight: 700, padding: '1px 4px', borderRadius: 20, background: 'var(--accent-bg,rgba(180,83,9,0.06))', color: 'var(--accent,#b45309)', border: '1px solid var(--accent-border,rgba(180,83,9,0.2))', marginLeft: 2, display: 'inline-block', verticalAlign: 'middle', lineHeight: 1.2 }}>R{p.rebuys - 1}</span>}
-                </div>
-                <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: Math.round(16*chipScale), color: isWinner ? 'var(--green,#059669)' : isLoser ? 'var(--red,#dc2626)' : 'var(--accent,#b45309)', letterSpacing: 0.5, marginTop: 2, lineHeight: 1 }}>
-                  {r2(p.bounty)} zł
-                </div>
+                <div style={{ position: 'absolute', top: 2, right: 4, fontSize: fNum, fontWeight: 700, color: 'rgba(255,255,255,.2)', lineHeight: 1, fontFamily: 'Saira Condensed,sans-serif' }}>{s}</div>
+                {p ? (
+                  <>
+                    <div style={{ fontSize: `clamp(${Math.round(10*chipScale)}px, ${Math.round(fName/16*2.5)}vw, ${fName}px)`, fontWeight: 700, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingTop: 2, color: isWinner ? 'var(--green)' : isLoser ? 'var(--red)' : 'var(--text)' }}>
+                      {p.name}
+                      {p.rebuys > 1 && <span style={{ fontSize: Math.round(8 * chipScale), fontWeight: 800, padding: '1px 4px', borderRadius: 20, background: 'rgba(233,185,73,.12)', color: 'var(--gold)', border: '1px solid rgba(233,185,73,.28)', marginLeft: 2, display: 'inline-block', verticalAlign: 'middle', lineHeight: 1.2 }}>R{p.rebuys - 1}</span>}
+                    </div>
+                    <div style={{ fontFamily: "'Saira Condensed',sans-serif", fontSize: `clamp(${Math.round(10*chipScale)}px, ${Math.round(fBounty/16*2.5)}vw, ${fBounty}px)`, color: isWinner ? 'var(--green)' : isLoser ? 'var(--red)' : 'var(--gold)', letterSpacing: .5, marginTop: 3, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                      {r2(p.bounty)} zł
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ fontSize: Math.round(18 * chipScale), color: isHovered && !readOnly ? 'var(--gold)' : 'rgba(255,255,255,.12)', lineHeight: 1, marginTop: 6, transition: 'all .15s' }}>+</div>
+                )}
               </div>
             )
-          }
-
-          // Empty seat
-          return (
-            <div key={s} style={{
-              position: 'absolute', left: x+'%', top: y+'%',
-              transform: 'translate(-50%,-50%)',
-              width: `clamp(${Math.round(108*chipScale)}px,15%,${Math.round(138*chipScale)}px)`,
-              background: isHovered && !readOnly ? 'var(--accent-bg,rgba(180,83,9,0.06))' : 'rgba(255,255,255,0.08)',
-              border: `2px ${isHovered && !readOnly ? 'solid' : 'dashed'} ${isHovered && !readOnly ? 'var(--accent,#b45309)' : 'rgba(255,255,255,0.25)'}`,
-              borderRadius: 8, textAlign: 'center',
-              cursor: readOnly ? 'default' : 'pointer',
-              transition: 'all 0.15s', zIndex: 2,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              minHeight: 60,
-            }}
-              onClick={() => !readOnly && onEmptySeatClick?.(tableNum, s)}
-              onMouseEnter={() => !readOnly && setHoveredSeat(s)}
-              onMouseLeave={() => setHoveredSeat(null)}
-              onDragOver={e => e.preventDefault()}
-              onDrop={() => !readOnly && onDrop?.(tableNum, s)}
-            >
-              <div style={{ position: 'absolute', top: 2, right: 4, fontSize: 9, fontWeight: 700, color: isHovered && !readOnly ? 'var(--accent,#b45309)' : 'rgba(255,255,255,0.3)', lineHeight: 1 }}>{s}</div>
-              <div style={{ fontSize: isHovered && !readOnly ? 22 : 16, color: isHovered && !readOnly ? 'var(--accent,#b45309)' : 'rgba(255,255,255,0.3)', fontWeight: 700, lineHeight: 1, transition: 'all 0.15s' }}>+</div>
-            </div>
-          )
-        })}
+          })}
         </div>
       </div>
     </div>

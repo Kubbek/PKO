@@ -1,8 +1,8 @@
 const THEME_KEY = 'pko_theme'
-const THEMES = ['amber', 'light', 'mega']
+export const THEMES = ['dark', 'light']
 
 export function getTheme() {
-  try { return localStorage.getItem(THEME_KEY) || 'light' } catch { return 'light' }
+  try { return localStorage.getItem(THEME_KEY) || 'dark' } catch { return 'dark' }
 }
 
 export function setTheme(t) {
@@ -11,8 +11,4 @@ export function setTheme(t) {
   try { localStorage.setItem(THEME_KEY, t) } catch {}
 }
 
-export function initTheme() {
-  setTheme(getTheme())
-}
-
-export { THEMES }
+export function initTheme() { setTheme(getTheme()) }
