@@ -27,7 +27,7 @@ export default function SeatGrid({ players, tableNum, onSeatClick, onSeatRightCl
             <div className="seat-player">
               <div className="sp-name">
                 {p.name}
-                {p.rebuys > 1 && <span style={{ marginLeft: 4, fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 20, background: 'var(--accent-bg)', color: 'var(--accent)', border: '1px solid var(--accent-border)', display: 'inline-block', verticalAlign: 'middle' }}>R{p.rebuys - 1}</span>}
+                {p.rebuys > 1 && <span className="badge badge-gold" style={{ marginLeft: 5, fontSize: 8 }}>R{p.rebuys - 1}</span>}
               </div>
               <div className="sp-bounty">{r2(p.bounty)} zł</div>
               {p.pocket_bounty > 0 && <div className="sp-pocket">+{r2(p.pocket_bounty)} zł</div>}
@@ -37,18 +37,18 @@ export default function SeatGrid({ players, tableNum, onSeatClick, onSeatRightCl
         )
 
         return (
-          <div key={s}
-            className="seat-cell"
-            style={{ cursor: readOnly ? 'default' : 'pointer', background: isHovered && !readOnly ? 'var(--accent-bg)' : undefined, borderColor: isHovered && !readOnly ? 'var(--accent)' : undefined, borderStyle: isHovered && !readOnly ? 'solid' : 'dashed' }}
+          <div key={s} className="seat-cell"
+            style={{ cursor: readOnly ? 'default' : 'pointer', background: isHovered && !readOnly ? 'var(--gold-bg)' : undefined, borderColor: isHovered && !readOnly ? 'var(--gold-border)' : undefined, borderStyle: isHovered && !readOnly ? 'solid' : 'dashed' }}
             onClick={() => !readOnly && onEmptySeatClick?.(tableNum, s)}
             onMouseEnter={() => !readOnly && setHoveredSeat(s)}
             onMouseLeave={() => setHoveredSeat(null)}
             onDragOver={e => e.preventDefault()}
             onDrop={() => !readOnly && onDrop?.(tableNum, s)}
           >
-            <div className="seat-empty" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 2 }}>
-              <div style={{ fontSize: isHovered && !readOnly ? 28 : 22, color: isHovered && !readOnly ? 'var(--accent)' : 'var(--text3)', fontWeight: 700, lineHeight: 1, transition: 'all 0.15s' }}>+</div>
-              {isHovered && !readOnly && <div style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 600 }}>Dodaj gracza</div>}
+            <div className="seat-empty">
+              <button style={{ color: isHovered && !readOnly ? 'var(--gold)' : undefined }}>
+                {isHovered && !readOnly ? <span style={{ fontSize: 13, color: 'var(--gold)', fontWeight: 700 }}>Dodaj</span> : '+'}
+              </button>
             </div>
             <div className="seat-num">{s}</div>
           </div>
